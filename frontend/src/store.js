@@ -5,8 +5,8 @@ import { create } from 'zustand';
  */
 export const useSceneStore = create((set) => ({
   // Initial positions
-  geigerPosition: [0, -0.5, 0], // x, y, z
-  shieldPosition: [1.5, -0.5, 0], // x, y, z
+  geigerPosition: [0, 0, 0], // Let's start them at the world origin
+  shieldPosition: [1.5, 0, 0],
 
   // Functions to update the positions
   setGeigerPosition: (newPos) => set({ geigerPosition: newPos }),
