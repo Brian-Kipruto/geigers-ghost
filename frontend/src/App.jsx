@@ -3,6 +3,8 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import GeigerCounter from './components/GeigerCounter';
 import LeadBrick from './components/LeadBrick';
+import { PhysicsEngine } from './components/PhysicsEngine';
+import { AudioPlayer } from './components/AudioPlayer';
 
 // ... (FlickeringLight function is unchanged) ...
 function FlickeringLight() {
@@ -43,6 +45,8 @@ export default function App() {
       <OrbitControls ref={controlsRef} />
       
       <axesHelper args={[1]} />
+      <PhysicsEngine />
+      <AudioPlayer />
     </Canvas>
   );
 }

@@ -17,10 +17,12 @@ app.add_middleware(
 SOURCE_POSITION = {"x": 2.0, "y": 1.0, "z": -3.0}
 
 # Constants
-INTENSITY_FACTOR = 500.0
+INTENSITY_FACTOR = 10.0
 EPSILON = 1e-6
 SHIELDING_THRESHOLD = 0.1
 ATTENUATION_FACTOR = 0.05
+BACKGROUND_RADIATION = 0.5
+MAX_CLICKS = 70.0
 
 
 def calculate_distance(x1: float, y1: float, z1: float, x2: float, y2: float, z2: float) -> float:
@@ -120,6 +122,9 @@ async def get_activity(
         counter_x, counter_y, counter_z
     ):
         clicks_per_second *= ATTENUATION_FACTOR
+    final_clicks = clicks_per_second + BACKGROUND_RADIATION
+
+    final_clicks = min(final_clicks, MAX_CLICKS)
     
     return {"clicks_per_second": clicks_per_second}
 

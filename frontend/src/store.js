@@ -11,4 +11,6 @@ export const useSceneStore = create((set) => ({
   // Functions to update the positions
   setGeigerPosition: (newPos) => set({ geigerPosition: newPos }),
   setShieldPosition: (newPos) => set({ shieldPosition: newPos }),
+  clicksPerSecond: 0,
+  setClicksPerSecond: (clicks) => set({ clicksPerSecond: clicks }),
 }));
