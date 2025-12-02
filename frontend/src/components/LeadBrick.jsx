@@ -3,8 +3,11 @@ import { useGLTF, DragControls } from '@react-three/drei';
 import { useSceneStore } from '../store.js';
 
 export default function LeadBrick({ controlsRef }) {
-  const { scene } = useGLTF('/brick/brick.glb'); // <-- Make sure this path is correct!
-  const { shieldPosition, setShieldPosition } = useSceneStore();
+  const { scene } = useGLTF('/brick/brick.glb'); // Path from your original file
+  // Get the initial position and the setter
+  const shieldPosition = useSceneStore((state) => state.shieldPosition);
+  const setShieldPosition = useSceneStore((state) => state.setShieldPosition);
+  
   const controls = controlsRef;
   const modelRef = useRef();
 
@@ -21,24 +24,27 @@ export default function LeadBrick({ controlsRef }) {
     }
   }, [isDragging, controls]);
 
-  const handleDrag = (e) => {
+  // Update the store on *every* drag movement
+const handleDrag = () => {
     if (modelRef.current) {
-      modelRef.current.position.y = shieldPosition[1];
+      const currentPos = modelRef.current.position;
+      
+      // FIX: Constrain Y to the current store value (0.85), not 0
+      // We read the initial Y from the store, so it stays on the table
+      currentPos.y = geigerPosition[1]; 
+      
+      setGeigerPosition([
+        currentPos.x,
+        currentPos.y, // This ensures it doesn't drop to the floor
+        currentPos.z,
+      ]);
     }
   };
 
   const handleDragEnd = () => {
     setIsDragging(false);
-    if (modelRef.current) {
-      console.log("LeadBrick: Drag ENDED. New pos:", modelRef.current.position);
-      setShieldPosition([
-        modelRef.current.position.x,
-        modelRef.current.position.y,
-        modelRef.current.position.z,
-      ]);
-    } else {
-      console.error("LeadBrick: modelRef is not set!");
-    }
+    // We no longer need to set position here, just log
+    console.log("LeadBrick: Drag ENDED.");
   };
 
   return (
@@ -52,7 +58,10 @@ export default function LeadBrick({ controlsRef }) {
       makeDefault
     >
       <group ref={modelRef} position={shieldPosition}>
-        <primitive object={scene} />
+        <primitive 
+          object={scene} 
+          rotation={[0, Math.PI / 1,0]} 
+        />
       </group>
     </DragControls>
   );

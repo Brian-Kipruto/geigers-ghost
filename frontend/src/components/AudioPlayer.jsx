@@ -1,15 +1,10 @@
-import { useRef, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useSceneStore } from '../store.js';
 import * as Tone from 'tone';
 
 // --- Create our Synthesized Geiger Click ---
-
-// 1. A white noise source
 const noise = new Tone.Noise("white");
-
-// 2. An "envelope" to shape the noise into a "click"
-// It has a very fast attack and decay
 const envelope = new Tone.AmplitudeEnvelope({
   attack: 0.001,
   decay: 0.04,
@@ -17,19 +12,12 @@ const envelope = new Tone.AmplitudeEnvelope({
   release: 0,
 }).toDestination();
 
-// 3. Connect the noise to the envelope
 noise.connect(envelope);
-
-// 4. Start the noise (it's silent until the envelope opens)
 noise.start();
 
-// ------------------------------------------
-
 export function AudioPlayer() {
-  const timeSinceLastClick = useRef(0);
   const clicksPerSecond = useSceneStore((state) => state.clicksPerSecond);
 
-  // We still need this to "unlock" the audio on the first click
   useEffect(() => {
     const startAudio = async () => {
       await Tone.start();
@@ -38,27 +26,26 @@ export function AudioPlayer() {
   }, []);
 
   useFrame((state, delta) => {
-    const clicks = clicksPerSecond;
+    const lambda = clicksPerSecond;
     
-    if (clicks <= 0) {
-      timeSinceLastClick.current = 0;
-      return;
-    }
+    // If we have 0 clicks, do nothing
+    if (lambda <= 0) return;
 
-    // Calculate the delay + a tiny bit of randomness
-    const randomJitter = Math.random() * 0.1 - 0.05;
-    const delay = 1.0 / clicks + randomJitter;
+    // --- POISSON PROCESS SIMULATION ---
+    // Instead of a timer, we calculate the probability of a click occurring 
+    // during this specific frame slice (delta).
+    // Probability P = 1 - e^(-lambda * delta)
+    // For small (lambda * delta), this is approx equal to (lambda * delta).
     
-    timeSinceLastClick.current += delta;
-
-    if (timeSinceLastClick.current > delay) {
-      // --- Play our synthesized click ---
-      // We trigger the envelope to open and close very quickly
-      envelope.triggerAttackRelease("64n"); // "64n" = a 64th note
-      
-      timeSinceLastClick.current = 0; // Reset the counter
+    const probability = 1 - Math.exp(-lambda * delta);
+    
+    if (Math.random() < probability) {
+      // Trigger the click!
+      // We vary the velocity (volume) slightly for more realism
+      const velocity = 0.8 + Math.random() * 0.4;
+      envelope.triggerAttackRelease("32n", "+0", velocity);
     }
   });
 
-  return null; // This component is invisible
+  return null;
 }

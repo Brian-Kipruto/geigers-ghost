@@ -1,42 +1,51 @@
-import { useEffect } from 'react';
+import { useRef } from 'react';
+import { useFrame } from "@react-three/fiber";
 import { useSceneStore } from '../store.js';
 
+// How often to call the API (in seconds)
+const FETCH_INTERVAL = 0.05; // Poll 10 times per second
+
 export function PhysicsEngine() {
-  // --- THIS IS THE FIX ---
-  // We subscribe to the primitive values (numbers), not the array.
-  // The component will *only* re-render if one of these 6 numbers changes.
-  const geigerX = useSceneStore((state) => state.geigerPosition[0]);
-  const geigerY = useSceneStore((state) => state.geigerPosition[1]);
-  const geigerZ = useSceneStore((state) => state.geigerPosition[2]);
-  const shieldX = useSceneStore((state) => state.shieldPosition[0]);
-  const shieldY = useSceneStore((state) => state.shieldPosition[1]);
-  const shieldZ = useSceneStore((state) => state.shieldPosition[2]);
   const setClicksPerSecond = useSceneStore((state) => state.setClicksPerSecond);
-  // --- END OF FIX ---
+  const lastFetchTime = useRef(0);
 
-  // This hook will now *only* run when one of the 6 coordinates changes.
-  useEffect(() => {
-    console.log('PhysicsEngine: Position changed. Fetching new data...');
+  useFrame((state, delta) => {
+    lastFetchTime.current += delta;
+
+    // Only run the fetch logic if enough time has passed
+    if (lastFetchTime.current < FETCH_INTERVAL) {
+      return; // Not time yet
+    }
     
-    const fetchActivity = async () => {
-      // We use the selected values here
-      const url = `http://127.0.0.1:8000/api/activity?counter_x=${geigerX}&counter_y=${geigerY}&counter_z=${geigerZ}&shield_x=${shieldX}&shield_y=${shieldY}&shield_z=${shieldZ}`;
-      
-      try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
-        
-        console.log('PhysicsEngine: Received new data:', data);
-        setClicksPerSecond(data.clicks_per_second);
+    lastFetchTime.current = 0; // Reset timer
 
-      } catch (error) {
-        console.error("PhysicsEngine: Failed to fetch data:", error);
-      }
-    };
+    // Get the latest state directly from the store
+    const { geigerPosition, shieldPosition } = useSceneStore.getState();
 
-    fetchActivity();
-  }, [geigerX, geigerY, geigerZ, shieldX, shieldY, shieldZ]);
+    const [geigerX, geigerY, geigerZ] = geigerPosition;
+    const [shieldX, shieldY, shieldZ] = shieldPosition;
 
-  return null; // This component is invisible
+    const url = `http://127.0.0.1:8000/api/activity?counter_x=${geigerX}&counter_y=${geigerY}&counter_z=${geigerZ}&shield_x=${shieldX}&shield_y=${shieldY}&shield_z=${shieldZ}`;
+
+    // Use promise-based fetch with .catch() to avoid syntax errors
+    fetch(url)
+      .then((response) => {
+        if (!response.ok) {
+          // Don't throw, just stop
+          return null;
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data) {
+          setClicksPerSecond(data.clicks_per_second);
+        }
+      })
+      .catch((error) => {
+        // Silence errors to prevent console spam
+        // console.error("PhysicsEngine: Failed to fetch data:", error);
+      });
+  });
+
+  return null;
 }

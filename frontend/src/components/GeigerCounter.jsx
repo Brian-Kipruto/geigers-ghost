@@ -4,7 +4,10 @@ import { useSceneStore } from '../store.js';
 
 export default function GeigerCounter({ controlsRef }) {
   const { scene } = useGLTF('/scene.gltf');
-  const { geigerPosition, setGeigerPosition } = useSceneStore();
+  // Get the initial position and the setter
+  const geigerPosition = useSceneStore((state) => state.geigerPosition);
+  const setGeigerPosition = useSceneStore((state) => state.setGeigerPosition);
+  
   const controls = controlsRef;
   const modelRef = useRef();
 
@@ -21,24 +24,28 @@ export default function GeigerCounter({ controlsRef }) {
     }
   }, [isDragging, controls]);
 
-  const handleDrag = (e) => {
+  // Update the store on *every* drag movement
+const handleDrag = () => {
     if (modelRef.current) {
-      modelRef.current.position.y = geigerPosition[1];
+      const currentPos = modelRef.current.position;
+      
+      currentPos.y = geigerPosition[1];
+      
+      // ADD THIS LINE TO FIND THE VAT:
+      console.log(`SURVEY: X=${currentPos.x.toFixed(2)}, Z=${currentPos.z.toFixed(2)}`);
+
+      setGeigerPosition([
+        currentPos.x,
+        currentPos.y,
+        currentPos.z,
+      ]);
     }
   };
 
   const handleDragEnd = () => {
     setIsDragging(false);
-    if (modelRef.current) {
-      console.log("GeigerCounter: Drag ENDED. New pos:", modelRef.current.position);
-      setGeigerPosition([
-        modelRef.current.position.x,
-        modelRef.current.position.y,
-        modelRef.current.position.z,
-      ]);
-    } else {
-      console.error("GeigerCounter: modelRef is not set!");
-    }
+    // We no longer need to set position here, just log
+    console.log("GeigerCounter: Drag ENDED.");
   };
 
   return (

@@ -1,14 +1,15 @@
 import { create } from 'zustand';
 
-/**
- * Zustand store to manage the state of our 3D scene.
- */
 export const useSceneStore = create((set) => ({
-  // Initial positions
-  geigerPosition: [0, 0, 0], // Let's start them at the world origin
-  shieldPosition: [1.5, 0, 0],
+  // ... (Keep existing positions) ...
+  geigerPosition: [-2.3, 1.3, 0], 
+  shieldPosition: [7.4, 1.75, 0],
+  
+  // TUTORIAL STATE
+  // 0: Welcome, 1: Controls, 2: Inverse Square, 3: Shielding, 4: Free Play
+  tutorialStep: 0,
+  setTutorialStep: (step) => set({ tutorialStep: step }),
 
-  // Functions to update the positions
   setGeigerPosition: (newPos) => set({ geigerPosition: newPos }),
   setShieldPosition: (newPos) => set({ shieldPosition: newPos }),
   clicksPerSecond: 0,

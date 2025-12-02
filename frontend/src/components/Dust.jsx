@@ -36,7 +36,7 @@ export function Dust() {
       </bufferGeometry>
       <pointsMaterial 
         size={0.01} 
-        color="#ffffff" 
+        color="#b4b2b2ff" 
         transparent 
         opacity={0.3} 
       />
